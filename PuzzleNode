@@ -1,0 +1,124 @@
+class PuzzleNode:
+    def __init__(self, n, state):
+        self.n = n
+        self.tablesize = n ** 2
+        self.goal = []
+        self.state = state
+
+    def __str__(self):
+        # Visualizes the table
+        t = " | "
+        s = " ----"
+        
+        print(s * (self.n))
+        for i in self.state:
+            counter, u = 0, t
+            while counter < len(i):
+                u += str(i[counter]) + t
+                counter += 1
+            print(u)
+            print(s * (self.n))
+
+
+def place_heuristic(state):
+    # Counts misplaced elements heuristic
+    if type(state) == str:
+        state = eval(state)
+        
+    statelist = [item for sublist in state for item in sublist]
+    misplacedcounter = 0
+    
+    for element in statelist:
+        if statelist.index(element) != element:
+            misplacedcounter += 1
+            
+    return misplacedcounter
+
+
+def manheuristic(state):
+    # Manhattan distance heuristic
+    if type(state) == str:
+        state = eval(state)
+        
+    statelist = [item for sublist in state for item in sublist]
+    flat_goallist = range(0, len(statelist))
+    mandistance = 0
+    
+    for element in statelist:
+        distance = abs(flat_goallist.index(element) - statelist.index(element))
+        xcoord, ycoord = distance // len(state[0]), distance % len(state[0])
+        mandistance += xcoord + ycoord
+        
+    return mandistance
+
+
+def myheuristic(state):
+    # Custom heuristic incorporating linear conflict
+    if type(state) == str:
+        state = eval(state)
+        
+    statelist = [item for sublist in state for item in sublist]
+    flat_goallist = range(0, len(statelist))
+    mydistance = 0
+    
+    for i in range(len(state[0])):
+        for j in state[i]:
+            for k in state[i]:
+                if j and k in goalstate(state)[i] and (
+                        (flat_goallist.index(j) - statelist.index(j) > 0 and flat_goallist.index(k) - statelist.index(k) < 0)
+                        or (flat_goallist.index(j) - statelist.index(j) < 0 and flat_goallist.index(k) - statelist.index(k) > 0)
+                ):
+                    mydistance += 2
+                    
+    return mydistance / 2 + manheuristic(state)
+
+
+heuristics = [place_heuristic, manheuristic, myheuristic]
+
+
+def goalstate(state):
+    statelist = [item for sublist in state for item in sublist]
+    flat_goallist = range(0, len(statelist))
+    goal = []
+    glstcounter = 0
+    
+    for j in range(len(state[0])):
+        goal.append(range(glstcounter, glstcounter + len(state[0])))
+        glstcounter += len(state[0])
+        
+    return goal
+
+
+def moves(inputs, n):
+    # Generates possible moves
+    storage = []
+    inputs = str(inputs)
+    move = eval(inputs)
+    i = 0
+    
+    while 0 not in move[i]:
+        i += 1
+        
+    j = move[i].index(0)
+    
+    if i > 0:
+        move[i][j], move[i - 1][j] = move[i - 1][j], move[i][j]
+        storage.append(str(move))
+        move[i][j], move[i - 1][j] = move[i - 1][j], move[i][j]
+        
+    if i < n - 1:
+        move[i][j], move[i + 1][j] = move[i + 1][j], move[i][j]
+        storage.append(str(move))
+        move[i][j], move[i + 1][j] = move[i + 1][j], move[i][j]
+        
+    if j > 0:
+        move[i][j], move[i][j - 1] = move[i][j - 1], move[i][j]
+        storage.append(str(move))
+        move[i][j], move[i][j - 1] = move[i][j - 1], move[i][j]
+        
+    if j < n - 1:
+        move[i][j], move[i][j + 1] = move[i][j + 1], move[i][j]
+        storage.append(str(move))
+        move[i][j], move[i][j + 1] = move[i][j + 1], move[i][j]
+        
+    return storage
